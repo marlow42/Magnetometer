@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 # SERIAL
 ser1 = serial.Serial('COM7',115200)
-ser1.timeout = 2000
+ser1.timeout = 5
 # time.sleep(1)
 
 # GUI window & stringvars
@@ -92,7 +92,7 @@ def moveto():
     updates = "done moving."
     print("moved",readser())
 
-# run data collection algorithm, return data list
+# run data collection algorithm, get quiver plot
 ldata = [[],[],[]]
 lpos = [[],[],[]]
 def getdata():
@@ -103,23 +103,35 @@ def getdata():
     lpos = [[],[],[]]
 
     # define measurement ranges
-    rxi = int(range_x)
-    ryi = int(range_y)
-    rzi = int(range_z)
+    # multiplied by 100 to account for floats
+    rxi = int(range_x*100)
+    ryi = int(range_y*100)
+    rzi = int(range_z*100)
     if not (rxi and ryi and rzi):
+        print("One or more ranges empty")
         return()
     
-    # add step size for measurement
-    rx = (rxi+stepx)-(rxi%stepx)+(stepx*int(rxi%stepx != 0))
-    ry = (ryi+stepy)-(ryi%stepy)+(stepy*int(ryi%stepy != 0))
-    rz = (rzi+stepz)-(rzi%stepz)+(stepx*int(rzi%stepz != 0))
+    # add step size for measurement increments
+    stepx = int(stepx*100)
+    stepy = int(stepy*100)
+    stepz = int(stepz*100)
+
+    # include outer bounds
+    # rx = (rxi+stepx)-(rxi%stepx)+(stepx*int(rxi%stepx != 0))
+    # ry = (ryi+stepy)-(ryi%stepy)+(stepy*int(ryi%stepy != 0))
+    # rz = (rzi+stepz)-(rzi%stepz)+(stepx*int(rzi%stepz != 0))
+
+    # don't include outer bounds
+    rx = (rxi)-(rxi%stepx)+(stepx*int(rxi%stepx != 0))
+    ry = (ryi)-(ryi%stepy)+(stepy*int(ryi%stepy != 0))
+    rz = (rzi)-(rzi%stepz)+(stepx*int(rzi%stepz != 0))
 
     # c = [2,xc,yc,zc]
 
     # move steppers to bottom left
     zero()
     print("zeroed")
-    c = [2,-rxi/2,0,-rzi/2]
+    c = [2,-(rxi/100)/2,0,-(rzi/100)/2]
     c = [str(i) for i in c]
     print("moving to bottom left:",c)
     ser1.write(bytes(",".join(c), 'utf-8'))
@@ -155,7 +167,7 @@ def getdata():
                 if reverse and revx:
                     xc = rx-xc-stepx
 
-                c = [2,xc,-yc,zc]
+                c = [2,xc/100,-yc/100,zc/100]
                 c = [str(i) for i in c]
                 print(c)
                 ser1.write(bytes(",".join(c), 'utf-8'))
@@ -168,35 +180,46 @@ def getdata():
                 # add measurement to ldata
                 # ldata.append(r)
                 r = r.split(", ")
-                ldata[0].append(int(r[0]))
-                ldata[1].append(int(r[1]))
-                ldata[2].append(int(r[2]))
+                ldata[0].append(float(r[0]))
+                ldata[1].append(float(r[1]))
+                ldata[2].append(float(r[2]))
                 # lpos.append(c[1:])
-                lpos[0].append(int(c[1]))
-                lpos[1].append(-int(c[2]))
-                lpos[2].append(int(c[3]))
+                lpos[0].append(float(c[1]))
+                lpos[1].append(-float(c[2]))
+                lpos[2].append(float(c[3]))
 
                 # wait_(1.5)
-    updates = "done collecting. not doing anything"
 
     print(type(ldata[0][0]))
     print(type(lpos[0][0]))
     print(ldata)
     print(lpos)
 
-    colors = []
+    # create colormap
+    color_strengths = []
     for n in range(len(ldata[0])):
         a = ldata[0][n]
         b = ldata[1][n]
         c = ldata[2][n]
         strength = np.sqrt(a**2+b**2+c**2)
-        # colors.append((5*strength,0,100))
-        colors.append((255,0,0))
+        color_strengths.append(strength)
+    color_scalars = []
+    a = np.min(color_strengths)
+    b = np.max(color_strengths)
+    for i in color_strengths:
+        color_scalars.append((i - a) / (b-a))
 
+    ncs = color_scalars.copy() # for arrowheads
+    for i in color_scalars:
+        ncs.append(i)
+        ncs.append(i)
 
     ax = plt.figure().add_subplot(projection='3d')
-    ax.quiver(lpos[0], lpos[1], lpos[2], ldata[0], ldata[1], ldata[2], colors=colors, normalize=True, pivot='middle')
+    cmap = plt.get_cmap()
+    ax.quiver(lpos[0], lpos[1], lpos[2], ldata[0], ldata[1], ldata[2], color=cmap(ncs), normalize=True, pivot='middle')
     plt.show()
+
+    updates = "done collecting. not doing anything"
 
 def test_time():
     # zero()
@@ -217,7 +240,7 @@ while True:
     if s == "1":
         # print("zero time :)")
         zero()
-    if s == "2":
+    elif s == "2":
         x = 1
         y = 1
         z = 1
@@ -225,12 +248,12 @@ while True:
         moveto()
         print(time.time()-a)
     elif s == "3":
-        range_x = 30
-        range_y = 10
-        range_z = 20
-        stepx = 3
-        stepy = 3
-        stepz = 3
+        range_x = 5
+        range_y = 1
+        range_z = 1
+        stepx = 0.5
+        stepy = 1
+        stepz = 1
         getdata()
         # print(ldata)
         # print(lpos)
