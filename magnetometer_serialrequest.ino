@@ -31,9 +31,15 @@ MultiStepper steppers;
 
 // elapsedMillis printTime; // can be used for optional real time data updates
 
+// for steps/mm (accurate to around 0.1mm):
 const float x_steps_per_mm = 200.885;
 const float y_steps_per_mm = 200.7752;
 const float z_steps_per_mm = 1614.961;
+
+// for steps testing:
+// const float x_steps_per_mm = 1; 
+// const float y_steps_per_mm = 1;
+// const float z_steps_per_mm = 1;
 
 long target[3];
 
