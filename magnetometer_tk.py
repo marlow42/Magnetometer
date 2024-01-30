@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import random
 import string
 
+# note: do NOT comment out print statements with readser() 
+
 # SERIAL
 ser1 = serial.Serial('COM7',115200)
 ser1.timeout = 5
@@ -203,9 +205,19 @@ def getdata():
 
                 # wait_(1.5)
 
+    # move back to center
+    c = [2,(rxi/100)/2,0,(rzi/100)/2,","]
+    # print(c)
+    c = [str(i) for i in c]
+    # print("Moving back to center:",c)
+    ser1.write(bytes(",".join(c), 'utf-8'))
+    print("Moved back to center",readser())
+    # wait_(1)
+    # zero()
+
     # write data to text file with random name
     filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))    
-    filename = r"c:\Users\samar\OneDrive\Documents\Magnetometer data\\" + filename + ".txt"
+    filename = r"c:\Users\samar\OneDrive\Documents\Magnetometer data\n52_data\\" + filename + ".txt"
     f = open(filename,'a')
     f.write('\n'.join([', '.join([str(n) for n in ldata[i]]) for i in range(3)]))
     f.write('\n')
@@ -226,6 +238,7 @@ def getdata():
     color_scalars = []
     a = np.min(color_strengths)
     b = np.max(color_strengths)
+    print("Max field strength:", b)
     for i in color_strengths:
         color_scalars.append((i - a) / (b-a))
 
@@ -234,11 +247,24 @@ def getdata():
         ncs.append(i)
         ncs.append(i)
 
+    # make alpha a little higher so it's not too transparent
+    transparencies = ncs.copy()
+    for i in range(len(transparencies)):
+        val = transparencies[i]
+        transparencies[i] = val + 0.25
+        if transparencies[i] > 1:
+            transparencies[i] = 1
+
     # make quiver plot
     ax = plt.figure().add_subplot(projection='3d')
-    cmap = plt.get_cmap()
+    cmap = plt.get_cmap('plasma')
     maxlen = min(stepx/100,stepy/100,stepz/100)
-    ax.quiver(lpos[0], lpos[1], lpos[2], ldata[0], ldata[1], ldata[2], color=cmap(ncs), normalize=True, pivot='middle', length = maxlen)
+    ax.quiver(lpos[0], lpos[1], lpos[2], ldata[0], ldata[2], [-i for i in ldata[1]], color=cmap(ncs), normalize=True, pivot='middle', length = maxlen, alpha = transparencies)
+    maxrange = max(rxi/100,ryi/100,rzi/100)
+    ax.set_xlim(0,maxrange)
+    ax.set_ylim(0,maxrange)
+    ax.set_zlim(0,maxrange)
+    
     plt.show()
 
     updates.set("Done collecting.")
