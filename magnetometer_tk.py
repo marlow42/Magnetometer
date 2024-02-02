@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import random
 import string
 
-# note: do NOT comment out print statements with readser() 
+# note: do NOT comment out print statements with readser()
+# the function detects when the last operation was completed
+# if print statement is removed, still have to call readser()
 
 # SERIAL
 ser1 = serial.Serial('COM7',115200)
@@ -40,7 +42,7 @@ def wait_(s):
     while time2-time1 < s:
         time2 = time.time()
         # print(time2-time1)
-    
+
 def readser():
     global ser1, pos
     # ser1.write(bytes("3,0,0,0", 'utf-8'))
@@ -85,12 +87,12 @@ def moveto():
     print("values received:",o)
     ser1.write(bytes('3,','utf-8'))
     currentpos = readser()[1]
-    # print("got current position")
+    print("got current position")
     currentpos = currentpos[9:].split(" | ")
     currentpos = currentpos[0].split(",")
     for i in range(3):
         currentpos[i] = float(currentpos[i])
-    # print("position values to add:",currentpos)
+    print("position values to add:",currentpos)
     for i in range(4):
         if o[i] == '':
             o[i] = 0
@@ -99,7 +101,7 @@ def moveto():
         o[i+1] += currentpos[i]
     o = [str(i) for i in o]
     o.append(',')
-    # print("new values to move to:",o)
+    print("new values to move to:",o)
     ser1.write(bytes(",".join(o), 'utf-8'))
     # wait_(1)
     print("Moved",readser())
@@ -217,7 +219,7 @@ def getdata():
 
     # write data to text file with random name
     filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))    
-    filename = r"c:\Users\samar\OneDrive\Documents\Magnetometer data\n52_data\\" + filename + ".txt"
+    filename = r"c:\Users\Marlow Tracy\OneDrive\Documents\Magnetometer data\n52_data\\" + filename + ".txt"
     f = open(filename,'a')
     f.write('\n'.join([', '.join([str(n) for n in ldata[i]]) for i in range(3)]))
     f.write('\n')
