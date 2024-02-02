@@ -219,7 +219,7 @@ def getdata():
 
     # write data to text file with random name
     filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))    
-    filename = r"c:\Users\Marlow Tracy\OneDrive\Documents\Magnetometer data\n52_data\\" + filename + ".txt"
+    filename = r"c:\Users\Marlow Tracy\OneDrive\Documents\Magnetometer data\\" + filename + ".txt"
     f = open(filename,'a')
     f.write('\n'.join([', '.join([str(n) for n in ldata[i]]) for i in range(3)]))
     f.write('\n')

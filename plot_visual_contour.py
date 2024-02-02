@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import griddata
 
 # read data from file
-magdata = open(r'c:\Users\samar\OneDrive\Documents\Magnetometer data\n52_data\IORV7.txt','r')
+magdata = open(r'c:\Users\Marlow Tracy\OneDrive\Documents\Magnetometer data\diskmagnet_data\n52_1_data_S.txt','r')
 def getfiledata():
     initial = magdata.readline().strip().split(', ')
     return [float(i) for i in initial]
@@ -71,17 +71,20 @@ for i in range(len(transparencies)):
 # ax.set_ylim(0,maxrange)
 # ax.set_zlim(0,maxrange)
 
-xi = np.linspace(0,8,100) # create a linearly spaced array of 100 points between 0 and 24
-yi = np.linspace(0,8,100)
-zi = griddata((y, z), color_strengths, (xi[None,:], yi[:,None]), method='cubic') # not sure if color_strengths is still raw units from the 5170 but you get the point
+
+
+xi = np.linspace(0,len(y),len(y)) # create a linearly spaced array of c points between a and b
+yi = np.linspace(0,len(z),len(z))
+zi = griddata((y, z), color_scalars, (xi[None,:], yi[:,None]), method='cubic')
 
 colormap = plt.cm.get_cmap('jet')
-colors = colormap(color_strengths)
+colors = colormap(color_scalars)
 plt.contour(xi, yi, zi, linewidths = 0.5, color = 'k') 
 plt.contourf(xi, yi, zi, 15, cmap=plt.cm.jet)
-plt.quiver(x, z, u, w)
+plt.quiver(y, z, w, [-i for i in v])
 sm = plt.cm.ScalarMappable(cmap=colormap)
 plt.colorbar(sm, label='Flux Density Magnitude [T]') # draw colorbar
 
 plt.show()
 # save file as PDF for high resolution
+
